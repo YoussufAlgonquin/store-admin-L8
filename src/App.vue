@@ -39,7 +39,7 @@ export default {
       fetch('/products')
         .then(response => response.json())
         .then(products => {
-          this.products = products;
+          this.products = Array.isArray(products) ? products : [];
         })
         .catch(error => {
           console.log(error);

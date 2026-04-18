@@ -231,6 +231,11 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         })
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}))
+          alert(`Error saving product: ${err.error || response.statusText}`)
+          return
+        }
         const saved = await response.json()
         alert('Product saved successfully')
         if (method === 'PUT') {
