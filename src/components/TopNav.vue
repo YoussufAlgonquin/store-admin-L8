@@ -2,9 +2,11 @@
   <nav>
     <div class="logo">
       <a href="/">
-        <img src="/algonquin-pet-store.png" alt="Algonquin Pet Store Logo">
+        <span class="logo-text">
+          <span class="logo-best">Best</span><span class="logo-buy">Buy</span>
+        </span>
+        <span class="logo-admin">Admin</span>
       </a>
-      Admin Portal
     </div>
     <ul class="nav-links" :class="{ 'nav-links--open': isNavOpen }">
       <li><router-link to="/orders" @click="closeNav">Orders</router-link></li>
@@ -40,35 +42,66 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #333;
+  background-color: #003DA5;
   color: #fff;
-  padding-top: 0.5rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-bottom: 1px;
+  padding: 0.75rem 1.5rem;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  font-size: 1.5rem;
-  font-weight: bold;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
-nav img {
-  padding-right: 15px;
-  width: 100px;
-  height: auto;
-  align-self: center;
+.logo a {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-text {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.logo-best {
+  color: #fff;
+}
+
+.logo-buy {
+  color: #FFE000;
+}
+
+.logo-admin {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+  font-weight: normal;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-left: 1px solid rgba(255,255,255,0.4);
+  padding-left: 0.5rem;
 }
 
 .nav-links {
   display: flex;
   list-style: none;
+  font-size: 1rem;
+  font-weight: bold;
+  gap: 1.5rem;
 }
 
-.logo {
-  display: flex;
-  align-items: center;
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.nav-links a:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .hamburger {
@@ -77,38 +110,30 @@ nav img {
   border: none;
   cursor: pointer;
   padding: 0;
-  margin: 0;
-  margin-top: -40px;
+  height: 24px;
 }
 
 .hamburger-icon {
   display: block;
-  width: 20px;
+  width: 24px;
   height: 2px;
   background-color: #fff;
   position: relative;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
 .hamburger-icon::before,
 .hamburger-icon::after {
   content: '';
   display: block;
-  width: 20px;
+  width: 24px;
   height: 2px;
   background-color: #fff;
   position: absolute;
   left: 0;
 }
 
-.hamburger-icon::before {
-  top: -6px;
-}
-
-.hamburger-icon::after {
-  bottom: -6px;
-}
+.hamburger-icon::before { top: -7px; }
+.hamburger-icon::after  { bottom: -7px; }
 
 @media (max-width: 768px) {
   .nav-links {
@@ -117,12 +142,14 @@ nav img {
     top: 100%;
     left: 0;
     right: 0;
-    background-color: #333;
+    background-color: #003DA5;
     padding: 1rem;
+    flex-direction: column;
+    gap: 0;
   }
 
   .nav-links--open {
-    display: block;
+    display: flex;
   }
 
   .nav-links--open li {

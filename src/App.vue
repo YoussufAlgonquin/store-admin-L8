@@ -4,20 +4,14 @@
     :orders="orders"
     :products="products"
     @fetchOrders="fetchOrders"
-    @completeOrder="completeOrder"
     @addProductsToList="addProductsToList"
     @updateProductInList="updateProductInList"
-    @getProduct="getProduct"
     @getProducts="getProducts"
   ></router-view>
 </template>
 
 <script>
 import TopNav from './components/TopNav.vue';
-
-const productServiceUrl = "/products/";
-const singleProductServiceUrl = "/product/";
-const makelineServiceUrl = "/makeline/";
 
 export default {
   name: 'App',
@@ -28,7 +22,6 @@ export default {
     return {
       orders: [],
       products: [],
-      product: {}
     }
   },
   mounted() {
@@ -39,102 +32,47 @@ export default {
       this.products.push(newProduct);
     },
     async updateProductInList(updatedProduct) {
-      const index = this.products.findIndex(product => product.id === updatedProduct.id);
-      this.products[index] = updatedProduct;
-    },
-    async getProduct(id) {
-      fetch(`${singleProductServiceUrl}${id}`)
-        .then(response => response.json())
-        .then(product => {
-          this.product.id = product.id
-          this.product.name = product.name
-          this.product.image = product.image
-          this.product.description = product.description
-          this.product.price = product.price
-        })
-        .catch(error => {
-          console.log(error)
-          alert('Error occurred while fetching product')
-        })
+      const index = this.products.findIndex(p => p.id === updatedProduct.id);
+      if (index !== -1) this.products[index] = updatedProduct;
     },
     async getProducts() {
-      fetch(`${productServiceUrl}`)
+      fetch('/products')
         .then(response => response.json())
         .then(products => {
-          this.products = products
+          this.products = products;
         })
         .catch(error => {
-          console.log(error)
-          alert('Error occurred while fetching products')
-        })
+          console.log(error);
+          alert('Error occurred while fetching products');
+        });
     },
     async fetchOrders() {
-      await fetch(`${makelineServiceUrl}order/fetch`)
+      fetch('/orders')
         .then(response => response.json())
         .then(data => {
-          console.log(data)
-          if (data) {
-            this.orders = data;
-          } else {
-            console.log('No orders from server');
-          }
+          this.orders = data;
         })
         .catch(error => console.error(error));
     },
-    async completeOrder(orderId) {      
-      // get the order and update the status
-      let order = this.orders.find(order => order.orderId === orderId);
-      order.status = 1;
-
-      let orderObject = JSON.stringify(order)
-      console.log(orderObject);
-
-      await fetch(`${makelineServiceUrl}order`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: orderObject
-      })
-        .then(response => {
-          if (!response.ok) {
-            alert('Error occurred while processing order')
-          } else {
-            alert('Order successfully processed')
-            // remove the order from the list
-            this.orders = this.orders.filter(order => order.orderId !== orderId);
-            this.$router.go(-1);
-          }
-        })
-        .catch(error => {
-          console.log(error)
-          alert('Error occurred while processing order')
-        })
-    }
   },
 }
 </script>
 
 <style>
+body {
+  background-color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 120px;
+  color: #1a1a1a;
+  margin-top: 80px;
   padding: 1rem;
-}
-
-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: #333;
-  color: #fff;
-  padding: 1rem;
-  margin: 0;
 }
 
 nav {
@@ -155,7 +93,7 @@ li {
 }
 
 a {
-  color: #fff;
+  color: #003DA5;
   text-decoration: none;
 }
 
@@ -163,13 +101,32 @@ table {
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
+  background-color: #fff;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
-th,
-td {
-  padding: 8px;
+th {
+  padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  background-color: #003DA5;
+  color: #fff;
+  font-weight: bold;
+}
+
+td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background-color: #f5f8ff;
 }
 
 .order-detail {
@@ -177,21 +134,28 @@ td {
 }
 
 button {
-  padding: 10px;
-  background-color: #005f8b;
+  padding: 10px 16px;
+  background-color: #003DA5;
   color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   height: 42px;
+  font-size: 0.9rem;
 }
 
 button:hover {
-  background-color: #005f8b;
+  background-color: #002a73;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 .action-button {
   float: right;
+  margin-bottom: 1rem;
 }
 
 .product-detail {
@@ -199,17 +163,24 @@ button:hover {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 1rem;
-  margin: 2rem auto;
+  gap: 2rem;
+  margin: 1rem auto;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
 .product-form {
   display: flex;
   flex-direction: column;
-  align-items: left;
-  justify-content: center;
-  margin: 2rem auto;
-  width: 50%;
+  align-items: center;
+  margin: 1rem auto;
+  width: 60%;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
 .form-row {
@@ -222,16 +193,24 @@ button:hover {
 
 .ai-button {
   margin-left: 10px;
-  padding: 10px 10px;
+  padding: 8px 12px;
+  height: auto;
+  background-color: #FFE000;
+  color: #1a1a1a;
+  font-weight: bold;
   border-radius: 5px;
   border: none;
-  background-color: #007acc;
-  color: #fff;
   cursor: pointer;
 }
 
 .ai-button:hover {
-  background-color: #005f8b;
+  background-color: #e6ca00;
+}
+
+.ai-button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
 }
 
 textarea {
@@ -239,6 +218,7 @@ textarea {
   padding: 5px;
   border-radius: 5px;
   border: 1px solid #ccc;
+  font-family: inherit;
 }
 
 label {
@@ -246,12 +226,47 @@ label {
   margin-right: 10px;
   width: 100px;
   font-weight: bold;
+  flex-shrink: 0;
 }
 
-input {
+input, select {
   width: 100%;
   padding: 5px;
   border-radius: 5px;
   border: 1px solid #ccc;
+  font-family: inherit;
 }
+
+.category-badge {
+  display: inline-block;
+  background-color: #FFE000;
+  color: #1a1a1a;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.error {
+  color: #c62828;
+  background-color: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-pending    { background-color: #fff3e0; color: #e65100; }
+.status-processing { background-color: #e3f2fd; color: #1565c0; }
+.status-complete   { background-color: #e8f5e9; color: #2e7d32; }
 </style>

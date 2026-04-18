@@ -2,8 +2,9 @@ const { defineConfig } = require('@vue/cli-service')
 const fetch = require("node-fetch")
 const bodyParser = require('body-parser')
 
-const PRODUCT_SERVICE_URL = (process.env.VUE_APP_PRODUCT_SERVICE_URL || "http://172.19.0.2:3002/")
-const MAKELINE_SERVICE_URL = (process.env.VUE_APP_MAKELINE_SERVICE_URL || "http://172.19.0.6:3001/")
+const PRODUCT_SERVICE_URL = (process.env.VUE_APP_PRODUCT_SERVICE_URL || "http://localhost:8082")
+const ORDER_SERVICE_URL   = (process.env.VUE_APP_ORDER_SERVICE_URL   || "http://localhost:3000")
+const AI_SERVICE_URL      = (process.env.VUE_APP_AI_SERVICE_URL      || "http://localhost:5000")
 
 module.exports = defineConfig({
   transpileDependencies: true,
@@ -14,187 +15,120 @@ module.exports = defineConfig({
     client: false,
     webSocketServer: false,
     setupMiddlewares: (middlewares, devServer) => {
-      
+
       if (!devServer) {
         throw new Error('webpack-dev-server is not defined');
       }
 
       devServer.app.use(bodyParser.json())
-      
+
       // Health check
       devServer.app.get('/health', (_, res) => {
-        const version = process.env.APP_VERSION || '0.1.0'
-        res.send({ status: 'ok', version: version})
+        res.send({ status: 'ok' })
       })
 
-      // Get all orders
-      devServer.app.get('/makeline/order/fetch', (_, res) => {
-        console.log(MAKELINE_SERVICE_URL)
-        fetch(`${MAKELINE_SERVICE_URL}order/fetch`)
-        .then(response => response.json())
-        .then(orders => {
-          res.send(orders)
-        })
-        .catch(error => console.error(error));
+      // --- Product Service ---
 
-      })
-
-      // Get a single order by id
-      devServer.app.get('/makeline/order/:id', (_, res) => {
-        fetch(`${MAKELINE_SERVICE_URL}order/${_.params.id}`)
-          .then(response => response.json())
-          .then(order => {
-            res.send(order)
-          })
-          .catch(error => {
-            console.log(error)
-            // alert('Error occurred while fetching products')
-          })
-
-      });
-
-      // Manually process an order
-      devServer.app.put('/makeline/order', (req, res) => {
-        const order = req.body
-        console.log(order)
-
-        fetch(`${MAKELINE_SERVICE_URL}order`, {
-          method: 'PUT',
-          body: JSON.stringify(order),
-          headers: { 'Content-Type': 'application/json' }
-        })
-          .then(response => res.send(response))
-          .catch(error => {
-            console.log(error)
-            // alert('Error occurred while posting order')
-          })
-      })
-
-      // Get all products
+      // GET /products — list all products
       devServer.app.get('/products', (_, res) => {
-        fetch(`${PRODUCT_SERVICE_URL}`)
+        fetch(`${PRODUCT_SERVICE_URL}/products`)
           .then(response => response.json())
-          .then(products => {
-            res.send(products)
-          })
-          .catch(error => {
-            console.log(error)
-            // alert('Error occurred while fetching products')
-          })
-      });
+          .then(products => res.send(products))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to fetch products' }) })
+      })
 
-      // Get a single product by id
-      devServer.app.get('/product/:id', (_, res) => {
-        fetch(`${PRODUCT_SERVICE_URL}${_.params.id}`)
+      // GET /products/:id — get single product
+      devServer.app.get('/products/:id', (req, res) => {
+        fetch(`${PRODUCT_SERVICE_URL}/products/${req.params.id}`)
           .then(response => response.json())
-          .then(products => {
-            res.send(products)
-          })
-          .catch(error => {
-            console.log(error)
-            // alert('Error occurred while fetching products')
-          })
-      });
+          .then(product => res.send(product))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to fetch product' }) })
+      })
 
-      // Add product
-      devServer.app.post('/product', (req, res) => {
-        console.log('Add product')
-        const product = req.body
-        console.log(product)
-
-        fetch(`${PRODUCT_SERVICE_URL}`, {
+      // POST /products — create product
+      devServer.app.post('/products', (req, res) => {
+        fetch(`${PRODUCT_SERVICE_URL}/products`, {
           method: 'POST',
-          body: JSON.stringify(product),
+          body: JSON.stringify(req.body),
           headers: { 'Content-Type': 'application/json' }
         })
           .then(response => response.json())
-          .then(product => {
-            console.log(product);
-            res.send(product)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          .then(product => res.status(201).send(product))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to create product' }) })
       })
 
-      // Update product
-      devServer.app.put('/product', (req, res) => {
-        console.log('Update product')
-        const product = req.body
-        console.log(product)
-
-        fetch(`${PRODUCT_SERVICE_URL}`, {
+      // PUT /products/:id — update product
+      devServer.app.put('/products/:id', (req, res) => {
+        fetch(`${PRODUCT_SERVICE_URL}/products/${req.params.id}`, {
           method: 'PUT',
-          body: JSON.stringify(product),
+          body: JSON.stringify(req.body),
           headers: { 'Content-Type': 'application/json' }
         })
           .then(response => response.json())
-          .then(product => {
-            console.log(product);
-            res.send(product)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          .then(product => res.send(product))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to update product' }) })
       })
 
-      // Get AI service health
+      // DELETE /products/:id — delete product
+      devServer.app.delete('/products/:id', (req, res) => {
+        fetch(`${PRODUCT_SERVICE_URL}/products/${req.params.id}`, { method: 'DELETE' })
+          .then(() => res.sendStatus(204))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to delete product' }) })
+      })
+
+      // --- Order Service ---
+
+      // GET /orders — list all orders
+      devServer.app.get('/orders', (_, res) => {
+        fetch(`${ORDER_SERVICE_URL}/orders`)
+          .then(response => response.json())
+          .then(orders => res.send(orders))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to fetch orders' }) })
+      })
+
+      // GET /orders/:id — get single order
+      devServer.app.get('/orders/:id', (req, res) => {
+        fetch(`${ORDER_SERVICE_URL}/orders/${req.params.id}`)
+          .then(response => response.json())
+          .then(order => res.send(order))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to fetch order' }) })
+      })
+
+      // --- AI Service ---
+
+      // GET /ai/health
       devServer.app.get('/ai/health', (_, res) => {
-        fetch(`${PRODUCT_SERVICE_URL}ai/health`)
+        fetch(`${AI_SERVICE_URL}/health`)
           .then(response => response.json())
-          .then(health => {
-            res.send(health);
-          })
-          .catch(error => {
-            console.error(error);
-            res.status(500).send('Health check failed');
-          });
+          .then(health => res.send(health))
+          .catch(error => { console.error(error); res.status(500).send({ error: 'AI health check failed' }) })
       })
 
-      // Generate product description
+      // POST /ai/generate/description
       devServer.app.post('/ai/generate/description', (req, res) => {
-        console.log('Generating product description')
-        const product = req.body
-        console.log(product)
-
-        fetch(`${PRODUCT_SERVICE_URL}ai/generate/description`, {
+        fetch(`${AI_SERVICE_URL}/generate/description`, {
           method: 'POST',
-          body: JSON.stringify(product),
+          body: JSON.stringify(req.body),
           headers: { 'Content-Type': 'application/json' }
         })
           .then(response => response.json())
-          .then(description => {
-            console.log(description);
-            res.send(description)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          .then(data => res.send(data))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to generate description' }) })
       })
 
-      // Generate product image
-      devServer.app.post('/ai/generate/image', (req, res) => {
-        console.log('Generating product image')
-        const product = req.body
-        console.log(product)
-
-        fetch(`${PRODUCT_SERVICE_URL}ai/generate/image`, {
+      // POST /ai/generate/specs
+      devServer.app.post('/ai/generate/specs', (req, res) => {
+        fetch(`${AI_SERVICE_URL}/generate/specs`, {
           method: 'POST',
-          body: JSON.stringify(product),
+          body: JSON.stringify(req.body),
           headers: { 'Content-Type': 'application/json' }
         })
           .then(response => response.json())
-          .then(image => {
-            console.log(image);
-            res.send(image)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+          .then(data => res.send(data))
+          .catch(error => { console.log(error); res.status(500).send({ error: 'Failed to generate specs' }) })
       })
 
       return middlewares;
     }
-
   }
 })
