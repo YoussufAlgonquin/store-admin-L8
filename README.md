@@ -1,41 +1,16 @@
-# store-admin
+# BestBuy Store Admin
 
-This is a Vue.js app that simulates a store admin portal where users can manually process orders, and manage products. It is meant to be used in conjunction with the product-service and makeline-service.
+A Vue.js admin portal for employees. Lets staff view and process orders, manage products, and generate AI-powered product descriptions and specs via the AI service.
 
-## Running the app locally
+## Features
 
-### Prerequisites
+- View and update order status (pending, processing, complete)
+- Create, edit, and delete products
+- Generate product descriptions and specs using Azure OpenAI
 
-- [Node.js](https://nodejs.org/en/download/)
-- [Vue CLI Service](https://cli.vuejs.org/guide/cli-service.html)
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- [OpenAI API Key](https://beta.openai.com/docs/developer-quickstart/your-api-keys)
-- [Azure OpenAI API Key](https://azure.microsoft.com/products/cognitive-services/openai-service/)
+## Running Locally
 
-### Running the app
-To run the necessary services, clone the repo, open a terminal, and navigate to the repo directory.
-
-If you have access to OpenAI or Azure OpenAI, open the `docker-compose.yml` file, uncomment the `ai-services` block, and add your OpenAI or Azure OpenAI credentials.
-
-> IMPORTANT: When filling in the values, do not put the value in double-quotes.
-
-```yaml
-environment:
-  - USE_AZURE_OPENAI=True # set to False if you are not using Azure OpenAI
-  - AZURE_OPENAI_DEPLOYMENT_NAME= # required if using Azure OpenAI
-  - AZURE_OPENAI_ENDPOINT= # required if using Azure OpenAI
-  - OPENAI_API_KEY= # always required
-  - OPENAI_ORG_ID= # required if using OpenAI
-```
-
-Then run the following command:
-
-```bash
-docker compose up
-```
-
-With the services running, open a new terminal and navigate to the `store-admin` directory. Then run the following commands:
+Set environment variables and start the dev server:
 
 ```bash
 export VUE_APP_PRODUCT_SERVICE_URL=http://localhost:3002/
@@ -45,15 +20,17 @@ npm install
 npm run serve
 ```
 
-When the app is running, you should see output similar to the following:
+App runs at `http://localhost:8081/`.
 
-```text
-  App running at:
-  - Local:   http://localhost:8081/ 
-  - Network: http://192.168.0.144:8081/
+To start backing services (including the AI service), configure your Azure OpenAI credentials in `docker-compose.yml` and run:
 
-  Note that the development build is not optimized.
-  To create a production build, run npm run build.
+```bash
+docker compose up
 ```
 
-Open a browser and navigate to `http://localhost:8081/`. You should see the store admin app running.
+## Docker
+
+```bash
+docker build -t store-admin .
+docker run -p 80:80 store-admin
+```
